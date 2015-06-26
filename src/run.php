@@ -7,24 +7,25 @@ if (!isset($arguments["data"])) {
     exit(1);
 }
 $config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
-if (isset($config["storage"]["input"]["tables"][0]["destination"])) {
-    $sourceFile  = $config["storage"]["input"]["tables"][0]["destination"];
-} else {
-    $sourceFile = $config["storage"]["input"]["tables"][0]["source"];
-}
-$destinationFile = "sliced.csv";
+
 try {
-    $writer = new \Keboola\TableauServerWriter\Writer();
-    $rows = $writer->processFile(
-        $arguments["data"] . "/in/tables/{$sourceFile }",
-        $arguments["data"] . "/out/tables/{$destinationFile}",
-        $config["parameters"]["primary_key_column"],
-        $config["parameters"]["data_column"],
-        $config["parameters"]["string_length"]
+    $writer = new \Keboola\TableauServerWriter\Writer(
+        $config["parameters"]["server_url"],
+        $config["parameters"]["username"],
+        $config["parameters"]["password"],
+        $config["parameters"]["site"]
     );
+
+    $filesCount = 0;
+    foreach (glob($arguments["data"] . "/in/files/*.tde") as $filename) {
+        $writer->publishFile($filename);
+        $filesCount++;
+    }
+    $writer->logout();
+
 } catch (\Keboola\TableauServerWriter\Exception $e) {
     print $e->getMessage();
     exit(1);
 }
-print "Processed {$rows} rows.";
+print "Processed {$filesCount} files.";
 exit(0);
