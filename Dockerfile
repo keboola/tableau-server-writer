@@ -1,4 +1,4 @@
-FROM keboola/base-php
+FROM keboola/base-php56
 MAINTAINER Jakub Matejka <jakub@keboola.com>
 
 WORKDIR /home
