@@ -1,4 +1,10 @@
 <?php
+/**
+ * @package wr-tableau-server
+ * @copyright 2015 Keboola
+ * @author Jakub Matejka <jakub@keboola.com>
+ */
+
 use Symfony\Component\Yaml\Yaml;
 require_once(dirname(__FILE__) . "/../vendor/autoload.php");
 $arguments = getopt("d::", array("data::"));
@@ -27,7 +33,7 @@ try {
 
 } catch (\Keboola\TableauServerWriter\Exception $e) {
     //@TODO Handle errors
-    print $e->getMessage();print_r($e->getTraceAsString());
+    print $e->getMessage();
     exit(1);
 }
 print "Processed {$filesCount} files.";

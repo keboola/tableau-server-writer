@@ -1,9 +1,8 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: Jakub
- * Date: 24/06/15
- * Time: 16:17
+ * @package wr-tableau-server
+ * @copyright 2015 Keboola
+ * @author Jakub Matejka <jakub@keboola.com>
  */
 
 namespace Keboola\TableauServerWriter;
