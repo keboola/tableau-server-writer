@@ -17,12 +17,34 @@ class Writer
     protected $client;
     protected $token;
     protected $siteId;
+    protected $serverUrl;
+    protected $projectId;
 
-    public function __construct($serverUrl, $username, $password, $site = null)
+    public function __construct($serverUrl, $projectId, $username, $password, $site = null)
     {
-        $this->client = new Client([
-            'base_uri' => "{$serverUrl}/api/2.0/sites/{$site}",
-            'timeout' => 60
+        $this->serverUrl = $serverUrl;
+        $this->projectId = $projectId;
+
+        $stack = \GuzzleHttp\HandlerStack::create();
+        function add_mixed_multipart()
+        {
+            return function (callable $handler) {
+                return function (
+                    \Psr\Http\Message\RequestInterface $request,
+                    array $options
+                ) use ($handler) {
+                    if (!empty($options['isMixed']) && $request->getBody() instanceof \GuzzleHttp\Psr7\MultipartStream) {
+                        $request = $request->withHeader('Content-Type', 'multipart/mixed; ; boundary='
+                            . $request->getBody()->getBoundary());
+                    }
+                    return $handler($request, $options);
+                };
+            };
+        }
+        $stack->push(add_mixed_multipart());
+        $this->client = new \GuzzleHttp\Client([
+            'base_uri' => $serverUrl,
+            'handler' => $stack
         ]);
 
         $this->login($username, $password, $site);
@@ -122,33 +144,53 @@ XML
                     [
                         'name' => 'tableau_file',
                         'contents' => $chunk,
-                        'filename' => 'file',
+                        'filename' => 'file.tde',
                         'headers'  => [
                             'Content-Type' => 'application/octet-stream'
                         ]
                     ]
-                ]
+                ],
+                'isMixed' => true
             ]);
-        } catch (ClientException $e) {echo $e->getRequest()->getUri().PHP_EOL.PHP_EOL;
-            echo $e->getRequest()->getBody().PHP_EOL.PHP_EOL;
-            throw new Exception('Upload chunk failed with response: ' . $e->getResponse()->getBody());
-        }
-    }
-
-    public function finishUpload($sessionId)
-    {
-        try {
-            $r = $this->client->post("/api/2.0/sites/{$this->siteId}/datasources?uploadSessionId={$sessionId}&datasourceType=tde&overwrite=true", [
-                'headers' => [
-                    'X-Tableau-Auth' => $this->token
-                ]
-            ]);echo $r->getBody().PHP_EOL;
         } catch (ClientException $e) {
             throw new Exception('Upload chunk failed with response: ' . $e->getResponse()->getBody());
         }
     }
 
-    public function publishFile($filename)
+    public function finishUpload($name, $sessionId)
+    {
+        try {
+            $this->client->post(
+                "/api/2.0/sites/{$this->siteId}/datasources?uploadSessionId={$sessionId}&datasourceType=tde&overwrite=true",
+                [
+                    'headers' => [
+                        'X-Tableau-Auth' => $this->token
+                    ],
+                    'multipart' => [
+                        [
+                            'name' => 'request_payload',
+                            'contents' => <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<tsRequest>
+    <datasource name="{$name}">
+        <project id="{$this->projectId}" />
+    </datasource>
+</tsRequest>
+XML
+,
+                            'headers'  => [
+                                'Content-Type' => 'text/xml'
+                            ]
+                        ]
+                    ],
+                    'isMixed' => 1
+                ]);
+        } catch (ClientException $e) {
+            throw new Exception('Finish upload failed with response: ' . $e->getResponse()->getBody());
+        }
+    }
+
+    public function publishFile($name, $filename)
     {
         if (!file_exists($filename)) {
             throw new Exception("File {$filename} does not exist");
@@ -163,6 +205,6 @@ XML
         }
         fclose($handle);
 
-        $this->finishUpload($uploadSessionId);
+        $this->finishUpload($name, $uploadSessionId);
     }
 }

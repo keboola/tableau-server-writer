@@ -11,6 +11,7 @@ $config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
 try {
     $writer = new \Keboola\TableauServerWriter\Writer(
         $config["parameters"]["server_url"],
+        $config["parameters"]["project_id"],
         $config["parameters"]["username"],
         $config["parameters"]["password"],
         $config["parameters"]["site"]
@@ -18,13 +19,15 @@ try {
 
     $filesCount = 0;
     foreach (glob($arguments["data"] . "/in/files/*.tde") as $filename) {
-        $writer->publishFile($filename);
+        $fileInfo = pathinfo($filename);
+        $writer->publishFile($fileInfo['filename'], $filename);
         $filesCount++;
     }
     $writer->logout();
 
 } catch (\Keboola\TableauServerWriter\Exception $e) {
-    print $e->getMessage();
+    //@TODO Handle errors
+    print $e->getMessage();print_r($e->getTraceAsString());
     exit(1);
 }
 print "Processed {$filesCount} files.";
