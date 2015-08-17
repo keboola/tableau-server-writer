@@ -24,10 +24,12 @@ try {
     );
 
     $filesCount = 0;
-    foreach (glob($arguments["data"] . "/in/files/*.tde") as $filename) {
+    foreach (glob($arguments["data"] . "/in/files/*") as $filename) {
         $fileInfo = pathinfo($filename);
-        $writer->publishFile($fileInfo['filename'], $filename);
-        $filesCount++;
+        if (!isset($fileInfo['extension']) || $fileInfo['extension'] != 'manifest') {
+            $writer->publishFile($fileInfo['filename'], $filename);
+            $filesCount++;
+        }
     }
     $writer->logout();
 
@@ -36,5 +38,5 @@ try {
     print $e->getMessage();
     exit(1);
 }
-print "Processed {$filesCount} files.";
+print "Uploaded {$filesCount} files.";
 exit(0);
