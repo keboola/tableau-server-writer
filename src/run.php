@@ -20,7 +20,7 @@ try {
         $config["parameters"]["project_id"],
         $config["parameters"]["username"],
         $config["parameters"]["password"],
-        $config["parameters"]["site"]
+        isset($config["parameters"]["site"]) ? $config["parameters"]["site"] : null
     );
 
     $filesCount = 0;
