@@ -1,4 +1,4 @@
-# wr-tableau-server
+# tableau-server-writer
 KBC Writer to Tableau Server
 
 The Writer takes files from Storage API File Upload tagged by `tde`, `table-export` and runId tags and uploads them
