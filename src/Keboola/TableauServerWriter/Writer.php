@@ -12,17 +12,21 @@ use GuzzleHttp\Exception\ClientException;
 
 class Writer
 {
+    const API_VERSION = '2.0';
+
     /** @var Client  */
     protected $client;
     protected $token;
     protected $siteId;
     protected $serverUrl;
     protected $projectId;
+    protected $baseUri;
 
     public function __construct($serverUrl, $projectId, $username, $password, $site = null)
     {
         $this->serverUrl = $serverUrl;
         $this->projectId = $projectId;
+        $this->baseUri = '/api/' . self::API_VERSION;
 
         $stack = \GuzzleHttp\HandlerStack::create();
         function add_mixed_multipart()
@@ -52,7 +56,7 @@ class Writer
     public function login($username, $password, $site = null)
     {
         try {
-            $result = $this->client->post("/api/2.0/auth/signin", [
+            $result = $this->client->post("{$this->baseUri}/auth/signin", [
                 'body' => <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
 <tsRequest>
@@ -63,13 +67,7 @@ class Writer
 XML
             ]);
 
-            $xml = new \SimpleXMLElement($result->getBody());
-            foreach($xml->getDocNamespaces() as $strPrefix => $strNamespace) {
-                if (!$strPrefix) {
-                    $xml->registerXPathNamespace('ts', $strNamespace);
-                }
-            }
-
+            $xml = self::parseResponse($result->getBody());
             $xPath = $xml->xpath('//ts:credentials/@token');
             if (!count($xPath)) {
                 throw new Exception('Token could not be found in API response: ' . $result->getBody());
@@ -89,7 +87,7 @@ XML
     public function logout()
     {
         try {
-            $this->client->post("/api/2.0/auth/signout", [
+            $this->client->post("{$this->baseUri}/auth/signout", [
                 'headers' => [
                     'X-Tableau-Auth' => $this->token
                 ]
@@ -102,19 +100,13 @@ XML
     public function initFileUpload()
     {
         try {
-            $result = $this->client->post("/api/2.0/sites/{$this->siteId}/fileUploads", [
+            $result = $this->client->post("{$this->baseUri}/sites/{$this->siteId}/fileUploads", [
                 'headers' => [
                     'X-Tableau-Auth' => $this->token
                 ]
             ]);
 
-            $xml = new \SimpleXMLElement($result->getBody());
-            foreach($xml->getDocNamespaces() as $strPrefix => $strNamespace) {
-                if (!$strPrefix) {
-                    $xml->registerXPathNamespace('ts', $strNamespace);
-                }
-            }
-
+            $xml = self::parseResponse($result->getBody());
             $xPath = $xml->xpath('//ts:fileUpload/@uploadSessionId');
             if (!count($xPath)) {
                 throw new Exception('Token could not be found in API response: ' . $result->getBody());
@@ -128,7 +120,7 @@ XML
     public function uploadChunk($chunk, $sessionId)
     {
         try {
-            $this->client->put("/api/2.0/sites/{$this->siteId}/fileUploads/{$sessionId}", [
+            $this->client->put("{$this->baseUri}/sites/{$this->siteId}/fileUploads/{$sessionId}", [
                 'headers' => [
                     'X-Tableau-Auth' => $this->token
                 ],
@@ -156,11 +148,11 @@ XML
         }
     }
 
-    public function finishUpload($name, $sessionId)
+    public function finishDatasourceUpload($name, $sessionId)
     {
         try {
-            $this->client->post(
-                "/api/2.0/sites/{$this->siteId}/datasources?uploadSessionId={$sessionId}&datasourceType=tde&overwrite=true",
+            $result = $this->client->post(
+                "{$this->baseUri}/sites/{$this->siteId}/datasources?uploadSessionId={$sessionId}&datasourceType=tde&overwrite=true",
                 [
                     'headers' => [
                         'X-Tableau-Auth' => $this->token
@@ -182,14 +174,21 @@ XML
                             ]
                         ]
                     ],
-                    'isMixed' => 1
+                    'isMixed' => true
                 ]);
+
+            $xml = self::parseResponse($result->getBody());
+            $xPath = $xml->xpath('//ts:datasource/@id');
+            if (!count($xPath)) {
+                throw new Exception('Token could not be found in API response: ' . $result->getBody());
+            }
+            return (string)$xPath[0];
         } catch (ClientException $e) {
             throw new Exception('Finish upload failed with response: ' . $e->getResponse()->getBody());
         }
     }
 
-    public function publishFile($name, $filename)
+    public function publishDatasource($name, $filename)
     {
         if (!file_exists($filename)) {
             throw new Exception("File {$filename} does not exist");
@@ -204,6 +203,43 @@ XML
         }
         fclose($handle);
 
-        $this->finishUpload($name, $uploadSessionId);
+        return $this->finishDatasourceUpload($name, $uploadSessionId);
+    }
+
+    public function getDatasource($datasourceId)
+    {
+        $result = $this->client->get("{$this->baseUri}/sites/{$this->siteId}/datasources/{$datasourceId}", [
+            'headers' => [
+                'X-Tableau-Auth' => $this->token
+            ]
+        ]);
+        $xml = self::parseResponse($result->getBody());
+        return [
+            'id' => $datasourceId,
+            'name' => (string)$xml->xpath('//ts:datasource/@name')[0],
+            'type' => (string)$xml->xpath('//ts:datasource/@type')[0],
+            'project' => (string)$xml->xpath('//ts:project/@id')[0],
+            'owner' => (string)$xml->xpath('//ts:owner/@id')[0],
+        ];
+    }
+
+    public function deleteDatasource($datasourceId)
+    {
+        $this->client->delete("{$this->baseUri}/sites/{$this->siteId}/datasources/{$datasourceId}", [
+            'headers' => [
+                'X-Tableau-Auth' => $this->token
+            ]
+        ]);
+    }
+
+    private static function parseResponse($response)
+    {
+        $xml = new \SimpleXMLElement($response);
+        foreach($xml->getDocNamespaces() as $strPrefix => $strNamespace) {
+            if (!$strPrefix) {
+                $xml->registerXPathNamespace('ts', $strNamespace);
+            }
+        }
+        return $xml;
     }
 }

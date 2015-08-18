@@ -8,10 +8,10 @@
          processIsolation="false"
          stopOnFailure="false"
          syntaxCheck="false"
-         bootstrap="bootstrap.php">
+         bootstrap="tests/bootstrap.php">
 
     <testsuite name="Main Test">
-        <directory>tests</directory>
+        <directory>tests/Keboola</directory>
     </testsuite>
 
 </phpunit>

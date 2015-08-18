@@ -27,7 +27,7 @@ try {
     foreach (glob($arguments["data"] . "/in/files/*") as $filename) {
         $fileInfo = pathinfo($filename);
         if (!isset($fileInfo['extension']) || $fileInfo['extension'] != 'manifest') {
-            $writer->publishFile($fileInfo['filename'], $filename);
+            $writer->publishDatasource($fileInfo['filename'], $filename);
             $filesCount++;
         }
     }
