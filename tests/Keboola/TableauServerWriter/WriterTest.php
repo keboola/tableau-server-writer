@@ -7,7 +7,6 @@
 
 namespace Keboola\TableauServerWriter;
 
-
 class WriterTest extends \PHPUnit_Framework_TestCase
 {
     public function testWriter()

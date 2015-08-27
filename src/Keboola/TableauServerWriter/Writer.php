@@ -29,28 +29,29 @@ class Writer
         $this->baseUri = '/api/' . self::API_VERSION;
 
         $stack = \GuzzleHttp\HandlerStack::create();
-        function add_mixed_multipart()
-        {
-            return function (callable $handler) {
-                return function (
-                    \Psr\Http\Message\RequestInterface $request,
-                    array $options
-                ) use ($handler) {
-                    if (!empty($options['isMixed']) && $request->getBody() instanceof \GuzzleHttp\Psr7\MultipartStream) {
-                        $request = $request->withHeader('Content-Type', 'multipart/mixed; ; boundary='
-                            . $request->getBody()->getBoundary());
-                    }
-                    return $handler($request, $options);
-                };
-            };
-        }
-        $stack->push(add_mixed_multipart());
+        $stack->push(self::addMixedMultipart());
         $this->client = new \GuzzleHttp\Client([
             'base_uri' => $serverUrl,
             'handler' => $stack
         ]);
 
         $this->login($username, $password, $site);
+    }
+
+    private static function addMixedMultipart()
+    {
+        return function (callable $handler) {
+            return function (
+                \Psr\Http\Message\RequestInterface $request,
+                array $options
+            ) use ($handler) {
+                if (!empty($options['isMixed']) && $request->getBody() instanceof \GuzzleHttp\Psr7\MultipartStream) {
+                    $request = $request->withHeader('Content-Type', 'multipart/mixed; ; boundary='
+                        . $request->getBody()->getBoundary());
+                }
+                return $handler($request, $options);
+            };
+        };
     }
 
     public function login($username, $password, $site = null)
@@ -168,14 +169,15 @@ XML
     </datasource>
 </tsRequest>
 XML
-,
+                            ,
                             'headers'  => [
                                 'Content-Type' => 'text/xml'
                             ]
                         ]
                     ],
                     'isMixed' => true
-                ]);
+                ]
+            );
 
             $xml = self::parseResponse($result->getBody());
             $xPath = $xml->xpath('//ts:datasource/@id');
@@ -235,7 +237,7 @@ XML
     private static function parseResponse($response)
     {
         $xml = new \SimpleXMLElement($response);
-        foreach($xml->getDocNamespaces() as $strPrefix => $strNamespace) {
+        foreach ($xml->getDocNamespaces() as $strPrefix => $strNamespace) {
             if (!$strPrefix) {
                 $xml->registerXPathNamespace('ts', $strNamespace);
             }

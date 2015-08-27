@@ -6,6 +6,7 @@
  */
 
 use Symfony\Component\Yaml\Yaml;
+
 require_once(dirname(__FILE__) . "/../vendor/autoload.php");
 $arguments = getopt("d::", array("data::"));
 if (!isset($arguments["data"])) {
