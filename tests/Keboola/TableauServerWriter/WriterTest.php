@@ -13,10 +13,10 @@ class WriterTest extends \PHPUnit_Framework_TestCase
     {
         $writer = new \Keboola\TableauServerWriter\Writer(
             TSW_SERVER_URL,
-            TSW_PROJECT_ID,
             TSW_USERNAME,
             TSW_PASSWORD,
-            TSW_SITE
+            TSW_SITE,
+            TSW_PROJECT_ID
         );
         $dataSourceName = 'test-'.uniqid();
         $dataSourceId = $writer->publishDatasource($dataSourceName, 'tests/test.tde');

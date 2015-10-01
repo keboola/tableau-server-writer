@@ -22,7 +22,7 @@ class Writer
     protected $projectId;
     protected $baseUri;
 
-    public function __construct($serverUrl, $projectId, $username, $password, $site = null)
+    public function __construct($serverUrl, $username, $password, $site = null, $projectId = null)
     {
         $this->serverUrl = $serverUrl;
         $this->projectId = $projectId;
@@ -56,6 +56,15 @@ class Writer
 
     public function login($username, $password, $site = null)
     {
+/*echo date('c').PHP_EOL."{$this->baseUri}/auth/signin".PHP_EOL.PHP_EOL;
+echo <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<tsRequest>
+    <credentials name="{$username}" password="{$password}">
+        <site contentUrl="{$site}" />
+    </credentials>
+</tsRequest>
+XML;*/
         try {
             $result = $this->client->post("{$this->baseUri}/auth/signin", [
                 'body' => <<<XML
@@ -67,7 +76,7 @@ class Writer
 </tsRequest>
 XML
             ]);
-
+//echo PHP_EOL.PHP_EOL.$result->getBody().PHP_EOL.PHP_EOL;die();
             $xml = self::parseResponse($result->getBody());
             $xPath = $xml->xpath('//ts:credentials/@token');
             if (!count($xPath)) {
@@ -81,6 +90,7 @@ XML
             }
             $this->siteId = (string)$xPath[0];
         } catch (ClientException $e) {
+//echo PHP_EOL.PHP_EOL.$e->getResponse()->getBody().PHP_EOL.PHP_EOL;die();
             throw new Exception('Login to API failed with response: ' . $e->getResponse()->getBody());
         }
     }
@@ -95,6 +105,30 @@ XML
             ]);
         } catch (ClientException $e) {
             throw new Exception('Logout from API failed with response: ' . $e->getResponse()->getBody());
+        }
+    }
+
+    public function listProjects()
+    {
+        try {
+            $result = $this->client->get("{$this->baseUri}/sites/{$this->siteId}/projects", [
+                'headers' => [
+                    'X-Tableau-Auth' => $this->token
+                ]
+            ]);
+            $xml = self::parseResponse($result->getBody());
+            $xPath = $xml->xpath('//ts:project');
+            $result = [];
+            foreach ($xPath as $r) {
+                $subResult = [];
+                foreach ($r->attributes() as $k => $v) {
+                    $subResult[$k] = (string)$v;
+                }
+                $result[] = $subResult;
+            }
+            return $result;
+        } catch (ClientException $e) {
+            throw new Exception('Listing of projects failed with response: ' . $e->getResponse()->getBody());
         }
     }
 
