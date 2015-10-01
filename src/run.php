@@ -8,8 +8,7 @@
 use Symfony\Component\Yaml\Yaml;
 
 set_error_handler(
-    function ($errno, $errstr, $errfile, $errline, array $errcontext)
-    {
+    function ($errno, $errstr, $errfile, $errline, array $errcontext) {
         if (0 === error_reporting()) {
             return false;
         }

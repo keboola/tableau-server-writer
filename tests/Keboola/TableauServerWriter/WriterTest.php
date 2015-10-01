@@ -9,7 +9,23 @@ namespace Keboola\TableauServerWriter;
 
 class WriterTest extends \PHPUnit_Framework_TestCase
 {
-    public function testWriter()
+    public function testListingProjects()
+    {
+        $writer = new \Keboola\TableauServerWriter\Writer(
+            TSW_SERVER_URL,
+            TSW_USERNAME,
+            TSW_PASSWORD,
+            TSW_SITE,
+            TSW_PROJECT_ID
+        );
+        $result = $writer->listProjects();
+        $this->assertGreaterThan(0, count($result));
+        $this->assertArrayHasKey('id', $result[0]);
+        $this->assertArrayHasKey('name', $result[0]);
+        $writer->logout();
+    }
+
+    public function testUpload()
     {
         $writer = new \Keboola\TableauServerWriter\Writer(
             TSW_SERVER_URL,
