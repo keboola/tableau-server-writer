@@ -54,6 +54,14 @@ class Writer
         };
     }
 
+    /**
+     * @param string $projectId
+     */
+    public function setProjectId($projectId)
+    {
+        $this->projectId = $projectId;
+    }
+
     public function login($username, $password, $site = null)
     {
 /*echo date('c').PHP_EOL."{$this->baseUri}/auth/signin".PHP_EOL.PHP_EOL;
@@ -130,6 +138,16 @@ XML
         } catch (ClientException $e) {
             throw new Exception('Listing of projects failed with response: ' . $e->getResponse()->getBody());
         }
+    }
+
+    public function getProjectId($name)
+    {
+        foreach ($this->listProjects() as $p) {
+            if (isset($p['name']) && $p['name'] == $name) {
+                return $p['id'];
+            }
+        }
+        return false;
     }
 
     public function initFileUpload()

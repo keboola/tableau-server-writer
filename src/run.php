@@ -18,26 +18,36 @@ set_error_handler(
 
 require_once(dirname(__FILE__) . "/../vendor/autoload.php");
 $arguments = getopt("d::", array("data::"));
-if (!isset($arguments["data"])) {
+if (!isset($arguments['data'])) {
     print "Data folder not set.";
     exit(1);
 }
-$config = Yaml::parse(file_get_contents($arguments["data"] . "/config.yml"));
+$config = Yaml::parse(file_get_contents($arguments['data'] . "/config.yml"));
 
 try {
     $writer = new \Keboola\TableauServerWriter\Writer(
-        $config["parameters"]["server_url"],
-        $config["parameters"]["username"],
-        $config["parameters"]["password"],
-        isset($config["parameters"]["site"]) ? $config["parameters"]["site"] : null,
-        isset($config["parameters"]["project_id"]) ? $config["parameters"]["project_id"] : null
+        $config['parameters']['server_url'],
+        $config['parameters']['username'],
+        $config['parameters']['password'],
+        isset($config['parameters']['site']) ? $config['parameters']['site'] : null
     );
+
+    if (!empty($config['parameters']['project_id'])) {
+        $writer->setProjectId($config['parameters']['project_id']);
+    } elseif (!empty($config['parameters']['project_name'])) {
+        $projectId = $writer->getProjectId($config['parameters']['project_name']);
+        if (!$projectId) {
+            print "Project with name {$config['parameters']['project_name']} does not exist on the server";
+            exit(1);
+        }
+        $writer->setProjectId($projectId);
+    }
 
     if (!empty($config['parameters']['get_projects'])) {
         print json_encode($writer->listProjects());
     } else {
         $filesCount = 0;
-        foreach (glob($arguments["data"] . "/in/files/*") as $filename) {
+        foreach (glob($arguments['data'] . "/in/files/*") as $filename) {
             $fileInfo = pathinfo($filename);
             if (!isset($fileInfo['extension']) || $fileInfo['extension'] != 'manifest') {
                 $writer->publishDatasource($fileInfo['filename'], $filename);
