@@ -84,7 +84,7 @@ XML;*/
 </tsRequest>
 XML
             ]);
-//echo PHP_EOL.PHP_EOL.$result->getBody().PHP_EOL.PHP_EOL;die();
+//echo PHP_EOL.PHP_EOL.$result->getBody().PHP_EOL.PHP_EOL;
             $xml = self::parseResponse($result->getBody());
             $xPath = $xml->xpath('//ts:credentials/@token');
             if (!count($xPath)) {
@@ -98,7 +98,7 @@ XML
             }
             $this->siteId = (string)$xPath[0];
         } catch (ClientException $e) {
-//echo PHP_EOL.PHP_EOL.$e->getResponse()->getBody().PHP_EOL.PHP_EOL;die();
+//echo PHP_EOL.PHP_EOL.$e->getResponse()->getBody().PHP_EOL.PHP_EOL;
             throw new Exception('Login to API failed with response: ' . $e->getResponse()->getBody());
         }
     }

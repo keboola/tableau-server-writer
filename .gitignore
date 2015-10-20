@@ -3,3 +3,4 @@ data
 .idea/
 build/
 composer.phar
+test.php
