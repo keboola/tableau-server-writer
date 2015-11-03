@@ -25,6 +25,11 @@ if (!isset($arguments['data'])) {
 $config = Yaml::parse(file_get_contents($arguments['data'] . "/config.yml"));
 
 try {
+    if (!filter_var($config['parameters']['server_url'], FILTER_VALIDATE_URL) !== false) {
+        print "{$config['parameters']['server_url']} is not a valid URL";
+        exit(1);
+    }
+
     $writer = new \Keboola\TableauServerWriter\Writer(
         $config['parameters']['server_url'],
         $config['parameters']['username'],
