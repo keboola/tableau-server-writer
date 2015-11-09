@@ -33,7 +33,8 @@ try {
     $writer = new \Keboola\TableauServerWriter\Writer(
         $config['parameters']['server_url'],
         $config['parameters']['username'],
-        $config['parameters']['password'],
+        isset ($config['parameters']['#password'])
+            ? $config['parameters']['#password'] : $config['parameters']['password'],
         isset($config['parameters']['site']) ? $config['parameters']['site'] : null
     );
 
