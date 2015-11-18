@@ -33,7 +33,7 @@ try {
     $writer = new \Keboola\TableauServerWriter\Writer(
         $config['parameters']['server_url'],
         $config['parameters']['username'],
-        isset ($config['parameters']['#password'])
+        isset($config['parameters']['#password'])
             ? $config['parameters']['#password'] : $config['parameters']['password'],
         isset($config['parameters']['site']) ? $config['parameters']['site'] : null
     );
@@ -56,7 +56,8 @@ try {
         foreach (glob($arguments['data'] . "/in/files/*") as $filename) {
             $fileInfo = pathinfo($filename);
             if (!isset($fileInfo['extension']) || $fileInfo['extension'] != 'manifest') {
-                $writer->publishDatasource($fileInfo['filename'], $filename);
+                $manifest = Yaml::parse(file_get_contents($filename . '.manifest'));
+                $writer->publishDatasource($manifest['name'], $filename);
                 $filesCount++;
             }
         }
