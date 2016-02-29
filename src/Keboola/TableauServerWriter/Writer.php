@@ -64,15 +64,6 @@ class Writer
 
     public function login($username, $password, $site = null)
     {
-/*echo date('c').PHP_EOL."{$this->baseUri}/auth/signin".PHP_EOL.PHP_EOL;
-echo <<<XML
-<?xml version="1.0" encoding="UTF-8"?>
-<tsRequest>
-    <credentials name="{$username}" password="{$password}">
-        <site contentUrl="{$site}" />
-    </credentials>
-</tsRequest>
-XML;*/
         try {
             $result = $this->client->post("{$this->baseUri}/auth/signin", [
                 'body' => <<<XML
@@ -84,7 +75,7 @@ XML;*/
 </tsRequest>
 XML
             ]);
-//echo PHP_EOL.PHP_EOL.$result->getBody().PHP_EOL.PHP_EOL;
+
             $xml = self::parseResponse($result->getBody());
             $xPath = $xml->xpath('//ts:credentials/@token');
             if (!count($xPath)) {
@@ -98,7 +89,7 @@ XML
             }
             $this->siteId = (string)$xPath[0];
         } catch (ClientException $e) {
-//echo PHP_EOL.PHP_EOL.$e->getResponse()->getBody().PHP_EOL.PHP_EOL;
+
             throw new Exception('Login to API failed with response: ' . $e->getResponse()->getBody());
         }
     }
@@ -252,7 +243,7 @@ XML
 
         $handle = fopen($filename, "rb");
         while (!feof($handle)) {
-            $contents = fread($handle, 12400);
+            $contents = fread($handle, 64000000);
             $this->uploadChunk($contents, $uploadSessionId);
         }
         fclose($handle);
