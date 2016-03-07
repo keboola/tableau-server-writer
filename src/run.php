@@ -66,6 +66,9 @@ try {
 
     $writer->logout();
     exit(0);
+} catch (\GuzzleHttp\Exception\ServerException $e) {
+    print $e->getMessage();
+    exit(1);
 } catch (\Keboola\TableauServerWriter\Exception $e) {
     //@TODO Handle errors
     print $e->getMessage();
