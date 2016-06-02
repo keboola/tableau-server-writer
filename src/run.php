@@ -43,7 +43,7 @@ try {
     } elseif (!empty($config['parameters']['project_name'])) {
         $projectId = $writer->getProjectId($config['parameters']['project_name']);
         if (!$projectId) {
-            print "Project with name {$config['parameters']['project_name']} does not exist on the server";
+            print "Project with name {$config['parameters']['project_name']} does not exist on the server. Please check your credentials.";
             exit(1);
         }
         $writer->setProjectId($projectId);
