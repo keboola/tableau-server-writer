@@ -73,4 +73,8 @@ try {
     //@TODO Handle errors
     print $e->getMessage();
     exit(1);
+} catch (\Exception $e) {
+    print $e->getMessage();
+    print $e->getTraceAsString();
+    exit(2);
 }
