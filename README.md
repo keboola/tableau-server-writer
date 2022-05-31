@@ -13,3 +13,7 @@ to Tableau server as datasources. TDE files can be prepared to File Upload using
 - **site** *(optional)* - Name of site to which the files will be uploaded
 - **project_id** *(optional)* - Id of project to which the files will be uploaded
 - **project_name** *(optional)* - Name of project to which the files will be uploaded
+
+## License
+
+MIT licensed, see [LICENSE](./LICENSE) file.
